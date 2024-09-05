@@ -1,0 +1,15 @@
+#steps taken
+-create react app
+-configured tailwind
+-Header
+-Routing of app
+-Login
+-sign in & sign up form
+-Form validation
+-useRef hook
+-firebase setup
+-created sign up user account
+-sign in using api
+-created redux store with userSlice
+-implemented sign out functionality
+-added displayName and photoURL using update profile
