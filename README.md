@@ -13,3 +13,4 @@
 -created redux store with userSlice
 -implemented sign out functionality
 -added displayName and photoURL using update profile
+-making the user redirect /browse to login page if the user is not logged in and vice versa

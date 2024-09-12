@@ -3,11 +3,10 @@ import Header from './Header';
 import { checkValidData } from '../utils/validate';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { auth } from "../utils/firebase";
-import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { addUser } from '../utils/userSlice';
+import { BG_IMG, USER_AVATAR } from '../utils/constants';
 const Login = () => {
-    const navigate = useNavigate();
     const dispatch = useDispatch();
     const [isSignInForm, setIsSignInForm] = useState(true);
     const email = useRef();
@@ -19,11 +18,11 @@ const Login = () => {
     }
     const handleButtonClick = () => {
         //validate the form data
-        console.log(email);
+        // console.log(email);
         const message = checkValidData(email.current.value, password.current.value);
-        console.log(message);
-        console.log(email.current.value)
-        console.log(password.current.value)
+        // console.log(message);
+        // console.log(email.current.value)
+        // console.log(password.current.value)
         // console.log(name.current.value)
         setErrorMessage(message);
         if (message) return;
@@ -32,9 +31,9 @@ const Login = () => {
                 .then((userCredential) => {
                     // Signed up 
                     const user = userCredential.user;
-                    console.log(user);
+                    // console.log(user);
                     updateProfile(user, {
-                        displayName: name.current.value, photoURL: "https://imgs.search.brave.com/tk-DHYa8-ceby19GA7OLpLNRA0SMbzPWYGujj7R8QFc/rs:fit:500:0:0:0/g:ce/aHR0cHM6Ly93YWxs/cGFwZXJzLmNvbS9p/bWFnZXMvaGQvbmV0/ZmxpeC1wcm9maWxl/LXBpY3R1cmVzLTEw/MDAteC0xMDAwLXFv/OWg4MjEzNHQ5bnYw/ajAuanBn"
+                        displayName: name.current.value, photoURL: USER_AVATAR
                     }).then(() => {
                         // Profile updated!
                         const { uid, email, displayName, photoURL } = auth.currentUser;
@@ -45,7 +44,6 @@ const Login = () => {
                             photoURL: photoURL
                         })
                         )
-                        navigate("/browse");
                     }).catch((error) => {
                         // An error occurred
                         setErrorMessage(error.message);
@@ -63,8 +61,7 @@ const Login = () => {
                 .then((userCredential) => {
                     // Signed in 
                     const user = userCredential.user;
-                    console.log(user);
-                    navigate("/browse");
+                    // console.log(user);
                 })
                 .catch((error) => {
                     const errorCode = error.code;
@@ -80,7 +77,7 @@ const Login = () => {
         <div>
             <Header />
             <div>
-                <img src="https://assets.nflxext.com/ffe/siteui/vlv3/1d29f9a4-1900-43dc-a420-99044f734ee2/cc3b7bcb-3f79-449e-a37c-26ffb20fce3c/IN-en-20240826-POP_SIGNUP_TWO_WEEKS-perspective_WEB_7a193436-88c7-4f66-a8f0-e191d3b26d13_small.jpg" alt='bg-img'></img>
+                <img src={BG_IMG} alt='bg-img'></img>
             </div>
             <form onSubmit={(e) => e.preventDefault()}
                 className='w-4/12 bg-black absolute flex flex-col mx-auto right-0 left-0 top-[20%] p-20 text-white rounded-lg bg-opacity-80'>
