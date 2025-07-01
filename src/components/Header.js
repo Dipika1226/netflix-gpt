@@ -5,7 +5,7 @@ import { auth } from '../utils/firebase';
 import { useDispatch, useSelector } from 'react-redux';
 import { addUser, removeUser } from '../utils/userSlice';
 import { LOGO } from '../utils/constants';
-import { toggleGptSearchView } from '../utils/gptSlice';
+import { removeGeminiMovieResult, toggleGptSearchView } from '../utils/gptSlice';
 import { SUPPORTED_LAGUAGES } from '../utils/constants';
 import { changeLanguage } from '../utils/configSlice';
 const Header = () => {
@@ -13,8 +13,12 @@ const Header = () => {
     const dispatch = useDispatch();
     const user = useSelector(store => store.user)
     const showGptSearch = useSelector(store => store.gpt.showGptSearch);
+    const { geminiSuggestedResults } = useSelector((store) => store.gpt)
     const handleGptSearchView = () => {
         dispatch(toggleGptSearchView());
+        if (showGptSearch) {
+            dispatch(removeGeminiMovieResult());
+        }
     }
     const handleSignOut = () => {
         signOut(auth)

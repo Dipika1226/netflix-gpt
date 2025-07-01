@@ -15,8 +15,12 @@ const gptSlice = createSlice({
             const { geminiSuggestedMovies, tmdbMovieResults } = action.payload;
             state.geminiSuggestedMovies = geminiSuggestedMovies;
             state.tmdbMovieResults = tmdbMovieResults
+        },
+        removeGeminiMovieResult: (state, action) => {
+            state.geminiSuggestedMovies = null;
+            state.tmdbMovieResults = null;
         }
     },
 })
-export const { toggleGptSearchView, addGeminiMovieResult } = gptSlice.actions;
+export const { toggleGptSearchView, addGeminiMovieResult, removeGeminiMovieResult } = gptSlice.actions;
 export default gptSlice.reducer;

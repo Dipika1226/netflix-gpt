@@ -1,36 +1,19 @@
-// import React from 'react'
-// import { useSelector } from 'react-redux'
-// import lang from "../utils/languageConstants";
-// const GptSearchBar = () => {
-//     const langKey = useSelector((store) => store.config.lang)
-//     return (
-//         <div className='pt-[10%] flex justify-center'>
-//             <form onSubmit={(e) => e.preventDefault()} className=' w-1/2 grid grid-cols-12'>
-//                 <input placeholder={lang[langKey].gptSearchPlaceholder} type='text' className='text-white m-4 p-4 col-span-10 rounded-3xl bg-white bg-opacity-90 outline-none'></input>
-//                 <button className='bg-red-700 p-4 m-4 rounded-lg col-span-2 text-white'>{lang[langKey].search}</button>
-//             </form>
-//         </div>
-//     )
-// }
-
-// export default GptSearchBar
-// src/components/GptSearchBar.js
-import { useRef } from "react";
-import client from "../utils/genAi";
+import { useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import lang from "../utils/languageConstants";
 import { API_OPTIONS } from "../utils/constants";
-import { addGeminiMovieResult } from "../utils/gptSlice";
+import { addGeminiMovieResult, removeGeminiMovieResult } from "../utils/gptSlice";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const GptSearchBar = () => {
     const dispatch = useDispatch();
     const langKey = useSelector((store) => store.config.lang);
     const searchText = useRef(null);
+
+    const [statusMessage, setStatusMessage] = useState(""); // <-- ✅ local status
+
     const genAI = new GoogleGenerativeAI(process.env.REACT_APP_GEMINI_API_KEY);
 
-
-    // Search movie in TMDB API
     const searchMovieTMDB = async (movie) => {
         const data = await fetch(
             `https://api.themoviedb.org/3/search/movie?query=${movie}&include_adult=false&language=en-US&page=1`,
@@ -42,46 +25,53 @@ const GptSearchBar = () => {
 
     const handleGeminiSearchClick = async () => {
         const query = searchText.current.value;
+        if (!query.trim()) {
+            setStatusMessage("Please enter a search query.");
+            return;
+        }
+        dispatch(removeGeminiMovieResult());
+        setStatusMessage("Searching...");
 
-        // Define the GPT-like query prompt
-        const gptQuery = `Act as a Movie Recommendation system and suggest some movies for the query: ${query}. Only give me names of 5 movies, comma-separated like the example result given ahead. Example Result: Gadar, Sholay, Don, Golmaal, Koi Mil Gaya`;
+        const prompt = `Act as a Movie Recommendation system and suggest some movies for the query: ${query}. Only give me names of 5 movies, comma-separated like the example result given ahead. Example Result: Gadar, Sholay, Don, Golmaal, Koi Mil Gaya`;
 
         try {
-            // Get the response from Gemini API
-            // Use the model to generate content
-            //const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-            //const result = await model.generateContent(gptQuery);
-            // const model = client.getGenerativeModel({ model: "gemini-1.5-flash" });
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+            const result = await model.generateContent(prompt);
+            const response = await result.response;
+            const text = await response.text();
 
-            // // Make the request using the model's generateContent method
-            // const result = await model.generateContent(gptQuery);
+            const geminiMovies = text.split(",").map((m) => m.trim()).filter(Boolean);
 
-            // // Handle the result (for example, display the result in the console)
-            // console.log(result.response.text());
-            // Use the client to generate the response from the Gemini API
-            const response = await client.chat.completions.create({
-                messages: [gptQuery],
-                model: "gemini-1.5-flash",
-            });
+            if (!geminiMovies || geminiMovies.length === 0) {
+                setStatusMessage("No movie suggestions found from Gemini.");
+                return;
+            }
+            console.log(geminiMovies)
+            const tmdbResults = await Promise.all(geminiMovies.map(searchMovieTMDB));
 
-            const gptMovies = response?.candidates[0]?.text?.split(",");;
+            const filteredResults = tmdbResults.filter((res) => res.length > 0);
+            console.log(filteredResults)
+            if (filteredResults.length === 0) {
+                setStatusMessage("No matching movies found on TMDB.");
+                return;
+            }
 
-            const promiseArray = gptMovies.map((movies) => searchMovieTMDB(movies));
-
-            const tmdbResults = await Promise.all(promiseArray);
-            console.log(tmdbResults);
-
-            // Dispatch the results to the Redux store
             dispatch(
-                addGeminiMovieResult({ geminiSuggestedMovies: gptMovies, tmdbMovieResults: tmdbResults })
+                addGeminiMovieResult({
+                    geminiSuggestedMovies: geminiMovies,
+                    tmdbMovieResults: filteredResults,
+                })
             );
+
+            setStatusMessage(""); // clear message
         } catch (error) {
             console.error("Error fetching from Gemini API:", error);
+            setStatusMessage("Something went wrong. Please try again.");
         }
     };
 
     return (
-        <div className="pt-[35%] md:pt-[10%] flex justify-center">
+        <div className="pt-[35%] md:pt-[10%] flex flex-col items-center">
             <form
                 className="w-full md:w-1/2 bg-black grid grid-cols-12"
                 onSubmit={(e) => e.preventDefault()}
@@ -99,6 +89,12 @@ const GptSearchBar = () => {
                     {lang[langKey].search}
                 </button>
             </form>
+
+            {statusMessage && (
+                <div className="text-white mt-4 text-sm bg-gray-800 p-2 rounded">
+                    {statusMessage}
+                </div>
+            )}
         </div>
     );
 };
